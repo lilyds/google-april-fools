@@ -1,2 +1,35 @@
 @import "tailwindcss";
 
+/* Google-like typography & surfaces */
+:root {
+  --g-text: #202124;
+  --g-text-2: #5f6368;
+  --g-surface: #ffffff;
+  --g-surface-2: #f8f9fa;
+  --g-blue: #1a73e8;
+  --g-green: #34a853;
+  --g-yellow: #fbbc05;
+  --g-red: #ea4335;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "Roboto", system-ui, -apple-system, Segoe UI, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+  color: var(--g-text);
+  background: var(--g-surface-2);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility helpers */
+.material {
+  font-family: "Material Symbols Rounded";
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.card {
+  @apply rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition;
+}

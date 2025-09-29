@@ -4,20 +4,19 @@ import Greeting from "./Greeting";
 import { JOKES } from "./jokes";
 import Modal from "./Modal";
 import PlayArea from "./PlayArea";
+import Chip from "./Chip";
 
 export default function App() {
-  // UI state
+  // state
   const [count, setCount] = useState(0);
   const [query, setQuery] = useState("");
   const [year, setYear] = useState("All");
   const [selected, setSelected] = useState(null);
 
-  // derive available years
-  const allYears = Array.from(new Set(JOKES.map((j) => j.year))).sort(
-    (a, b) => b - a
-  );
+  // years for filter
+  const allYears = Array.from(new Set(JOKES.map((j) => j.year))).sort((a, b) => b - a);
 
-  // filter by search + year
+  // filters
   const filtered = JOKES.filter((j) => {
     const matchesQuery =
       j.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -26,7 +25,7 @@ export default function App() {
     return matchesQuery && matchesYear;
   });
 
-  // group filtered jokes by year (newest first)
+  // grouped by year (newest first)
   const grouped = filtered
     .slice()
     .sort((a, b) => b.year - a.year || a.title.localeCompare(b.title))
@@ -35,32 +34,27 @@ export default function App() {
       return acc;
     }, {});
 
-  // ---- Deep-link helpers (#/joke/<id>) ----
+  // deep-link helpers (#/joke/<id>)
   function getHashJokeId() {
     const h = window.location.hash || "";
     const parts = h.replace(/^#\/?/, "").split("/");
     return parts[0] === "joke" && parts[1] ? parts[1] : null;
   }
-
-  function openJoke(joke) {
-    setSelected(joke);
-    window.location.hash = `/joke/${joke.id}`;
+  function openJoke(j) {
+    setSelected(j);
+    window.location.hash = `/joke/${j.id}`;
   }
-
   function closeJoke() {
     setSelected(null);
     if (getHashJokeId()) window.location.hash = `/`;
   }
-
-  // open from URL on first load
   useEffect(() => {
     const id = getHashJokeId();
-    if (!id) return;
-    const j = JOKES.find((x) => x.id === id);
-    if (j) setSelected(j);
+    if (id) {
+      const j = JOKES.find((x) => x.id === id);
+      if (j) setSelected(j);
+    }
   }, []);
-
-  // react to back/forward (hash changes)
   useEffect(() => {
     const onHash = () => {
       const id = getHashJokeId();
@@ -72,98 +66,142 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  // helper: guess a tag color from id (fun accent only)
+  const tagFor = (id) => {
+    if (id.includes("gmail")) return ["Gmail", "red"];
+    if (id.includes("maps")) return ["Maps", "green"];
+    if (id.includes("nose")) return ["Search", "blue"];
+    if (id.includes("pigeon")) return ["Search", "blue"];
+    if (id.includes("gulp")) return ["Labs", "yellow"];
+    return ["Google", "gray"];
+  };
+
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-[var(--g-surface-2)]">
       <Header />
 
-      <main className="mx-auto max-w-3xl px-4 pb-16 pt-6">
-        {/* heading */}
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Hello, React <span className="text-indigo-600">+ Tailwind</span> 👋
-        </h1>
-        <p className="mt-2 text-gray-600">
-          If you can see the colored text and nice spacing, Tailwind is working.
-        </p>
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-6">
+        {/* Page intro */}
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h1 className="text-[22px] font-bold tracking-tight">
+            Explore April Fools’ by year
+          </h1>
+          <p className="mt-1 text-[14px] text-[var(--g-text-2)]">
+            Search the archive and try mini interactive demos for a few classics.
+          </p>
 
-        {/* counter button */}
-        <div className="mt-6">
-          <button
-            className="rounded-xl px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 transition"
-            onClick={() => setCount((c) => c + 1)}
-          >
-            You clicked {count} time{count === 1 ? "" : "s"}
-          </button>
-        </div>
+          {/* Quick playful button from earlier */}
+          <div className="mt-4">
+            <button
+              className="rounded-xl px-3 py-2 text-sm text-white transition"
+              style={{ background: "#1A73E8" }}
+              onClick={() => setCount((c) => c + 1)}
+            >
+              You clicked {count} time{count === 1 ? "" : "s"}
+            </button>
+          </div>
+        </section>
 
-        {/* reusable component demo */}
-        <hr className="my-6" />
-        <p className="text-sm text-gray-500">Reusable component demo:</p>
-        <Greeting name="Lily" />
-        <Greeting name="World" />
-
-        {/* jokes list with year + search controls */}
-        <hr className="my-6" />
-        <h2 className="text-2xl font-semibold">Jokes</h2>
-
-        <div className="mt-3 flex gap-3">
+        {/* Filter rail */}
+        <section className="mt-6 flex flex-col gap-3 md:flex-row md:items-center">
           <select
-            className="rounded-lg border px-3 py-2"
+            className="rounded-lg border bg-white px-3 py-2 text-sm"
             value={year}
             onChange={(e) => setYear(e.target.value)}
           >
             <option value="All">All years</option>
             {allYears.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
+              <option key={y} value={y}>{y}</option>
             ))}
           </select>
 
-          <input
-            className="flex-1 rounded-lg border px-3 py-2"
-            placeholder="Search by title or year…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
+          <div className="flex-1">
+            <input
+              className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+              placeholder="Search by title or year…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
 
-        {/* grouped list */}
-        <div className="mt-3 space-y-6">
-          {Object.entries(grouped).map(([year, items]) => (
-            <section key={year}>
-              <h3 className="text-xl font-semibold">{year}</h3>
-              <ul className="mt-2 space-y-2">
-                {items.map((j) => (
-                  <li
-                    key={j.id}
-                    className="rounded-lg border p-3 cursor-pointer hover:bg-gray-50"
-                    onClick={() => openJoke(j)}
-                  >
-                    <div className="font-medium">{j.title}</div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {/* Example chips (fun accents, optional) */}
+          <div className="flex flex-wrap gap-2">
+            <Chip color="blue">Search</Chip>
+            <Chip color="red">Gmail</Chip>
+            <Chip color="green">Maps</Chip>
+            <Chip color="yellow">Labs</Chip>
+          </div>
+        </section>
+
+        {/* Greeting demo (kept for learning) */}
+        <section className="mt-6">
+          <p className="text-xs text-[var(--g-text-2)]">Reusable component demo:</p>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <div className="card p-4">
+              <Greeting name="Lily" />
+            </div>
+            <div className="card p-4">
+              <Greeting name="World" />
+            </div>
+          </div>
+        </section>
+
+        {/* Year sections with card grid */}
+        <section className="mt-8 space-y-8">
+          {Object.entries(grouped).map(([yr, items]) => (
+            <div key={yr}>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="text-xl font-semibold">{yr}</h2>
+                <div className="h-px w-full bg-gray-200" />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map((j) => {
+                  const [label, color] = tagFor(j.id);
+                  const demo =
+                    j.id.includes("nose") ||
+                    j.id.includes("pigeon") ||
+                    j.id.includes("gulp");
+                  return (
+                    <article
+                      key={j.id}
+                      className="card p-4 cursor-pointer"
+                      onClick={() => openJoke(j)}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-medium leading-snug">{j.title}</h3>
+                        {demo && (
+                          <span className="material text-[#1A73E8]" aria-hidden>play_circle</span>
+                        )}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Chip color={color}>{label}</Chip>
+                        <span className="text-xs text-[var(--g-text-2)]">Year {j.year}</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
           ))}
-        </div>
+        </section>
 
-        {/* modal for details + play area */}
+        {/* Modal */}
         <Modal open={!!selected} onClose={closeJoke}>
           {selected && (
             <div>
               <h4 className="text-lg font-semibold">{selected.title}</h4>
-              <p className="mt-1 text-sm text-gray-600">Year {selected.year}</p>
+              <p className="mt-1 text-sm text-[var(--g-text-2)]">Year {selected.year}</p>
 
               <div className="mt-4 text-sm text-gray-700 leading-relaxed">
-                This is where we’ll show more details, links, and a small “play”
-                demo. Click outside the box or press Esc to close.
+                Try the mini demo below. Click outside the sheet or press Esc to close.
               </div>
 
               <PlayArea joke={selected} />
 
               <div className="mt-4 text-right">
                 <button
-                  className="rounded-lg border px-3 py-2 hover:bg-gray-50"
+                  className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
                   onClick={closeJoke}
                 >
                   Close
@@ -176,3 +214,4 @@ export default function App() {
     </div>
   );
 }
+
